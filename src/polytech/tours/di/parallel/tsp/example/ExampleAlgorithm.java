@@ -51,9 +51,9 @@ public class ExampleAlgorithm implements Algorithm {
 		}
 
 //		best = localSearch(s, instance, max_cpu);
-		Swapper swapper = new Swapper(s.clone(), instance, max_cpu);
-		swapper.run();
-		best = swapper.getBestSolution();
+//		Swapper swapper = new Swapper(s.clone(), instance, max_cpu);
+//		swapper.run();
+//		best = swapper.getBestSolution();
 
 		System.out.println("BEST SOL ("+counter+" calculations) : ");
 		return best; //execution(s, instance, max_cpu);

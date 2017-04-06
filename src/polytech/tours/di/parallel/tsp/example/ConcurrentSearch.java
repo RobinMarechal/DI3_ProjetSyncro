@@ -1,9 +1,6 @@
 package polytech.tours.di.parallel.tsp.example;
 
-import polytech.tours.di.parallel.tsp.Algorithm;
-import polytech.tours.di.parallel.tsp.Instance;
-import polytech.tours.di.parallel.tsp.InstanceReader;
-import polytech.tours.di.parallel.tsp.Solution;
+import polytech.tours.di.parallel.tsp.*;
 
 import java.util.Properties;
 import java.util.Random;
@@ -15,7 +12,7 @@ public class ConcurrentSearch implements Algorithm {
 
     // Constants
     private final int NB_THREADS = 8;
-
+    private final int NB_TASKS = 100;
 
     private long counter = 0;
 
@@ -39,15 +36,18 @@ public class ConcurrentSearch implements Algorithm {
 
         // List of threads.....
 
-        long startTime=System.currentTimeMillis();
-        for(int i=0; i<instance.getN(); i++){
-            s.add(i);
-        }
+//        long startTime=System.currentTimeMillis();
+//        for(int i=0; i<instance.getN(); i++){
+//            s.add(i);
+//        }
+
+        TSPCalculator calculator = new TSPCalculator(s.clone(), instance, max_cpu);
+        best = calculator.computeTSP(NB_THREADS, NB_TASKS);
 
 //		best = localSearch(s, instance, max_cpu);
-        Swapper swapper = new Swapper(s.clone(), instance, max_cpu);
-        swapper.run();
-        best = swapper.getBestSolution();
+//        Swapper swapper = new Swapper(s.clone(), instance, max_cpu);
+//        swapper.call();
+//        best = swapper.getBestSolution();
 
         System.out.println("BEST SOL ("+counter+" calculations) : ");
         return best; //execution(s, instance, max_cpu);

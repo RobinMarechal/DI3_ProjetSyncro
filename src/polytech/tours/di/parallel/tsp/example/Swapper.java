@@ -4,28 +4,31 @@ import polytech.tours.di.parallel.tsp.Instance;
 import polytech.tours.di.parallel.tsp.Solution;
 import polytech.tours.di.parallel.tsp.TSPCostCalculator;
 
+import java.util.concurrent.Callable;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * Created by Robin on 05/04/2017.
  */
-public class Swapper implements Runnable {
+public class Swapper implements Callable<Solution>{
 
     private Solution solution = null;
     private Solution bestSolution = null;
     private Instance instance = null;
     private long max_cpu = 0;
     private long nbIterations = 0;
+    private long runs;
+    private long timeLeft;
 
-    public Swapper(Solution solution, Instance instance, long max_cpu) {
-        this.solution = solution;
-        this.instance = instance;
-        this.max_cpu = max_cpu;
-    }
+//    public Swapper(Solution solution, Instance instance, long max_cpu) {
+//        this.solution = solution;
+//        this.instance = instance;
+//        this.max_cpu = max_cpu;
+//    }
 
-    @Override
-    public void run() {
-        localSearch();
+    public Swapper(long timeLeft)
+    {
+        this.timeLeft = timeLeft;
     }
 
     public Solution getSolution()
@@ -43,7 +46,7 @@ public class Swapper implements Runnable {
         return bestSolution;
     }
 
-    public void localSearch()
+    public Solution localSearch()
     {
         int i, j, size;
         Solution solToSwap;
@@ -51,10 +54,11 @@ public class Swapper implements Runnable {
         double matrix[][] = instance.getDistanceMatrix();
         long startTime=System.currentTimeMillis();
         size = solution.size();
+        TSPCostCalculator costCalc = new TSPCostCalculator();
 
-        bestSol.setOF(TSPCostCalculator.calcOF(matrix, bestSol));
+        bestSol.setOF(costCalc.calcOF(matrix, bestSol));
 
-        while((System.currentTimeMillis()-startTime)/1_000<=max_cpu){
+        while((System.currentTimeMillis()-startTime)/1_000 <= timeLeft){
             i = ThreadLocalRandom.current().nextInt(size);
             j = ThreadLocalRandom.current().nextInt(size);
 
@@ -63,7 +67,7 @@ public class Swapper implements Runnable {
             solToSwap = bestSol.clone();
             solToSwap.relocate(i, j);
             //set the objective function of the solution
-            double OF = TSPCostCalculator.calcOF(matrix, solToSwap);
+            double OF = costCalc.calcOF(matrix, solToSwap);
             solToSwap.setOF(OF);
             if(OF < bestSol.getOF())
             {
@@ -73,6 +77,17 @@ public class Swapper implements Runnable {
             nbIterations++;
         }
 
-        bestSolution = bestSol;
+        return bestSol;
+    }
+
+    /**
+     * Computes a result, or throws an exception if unable to do so.
+     *
+     * @return computed result
+     * @throws Exception if unable to compute a result
+     */
+    @Override
+    public Solution call() throws Exception {
+        return localSearch();
     }
 }
