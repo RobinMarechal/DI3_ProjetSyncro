@@ -4,90 +4,92 @@ import polytech.tours.di.parallel.tsp.Instance;
 import polytech.tours.di.parallel.tsp.Solution;
 import polytech.tours.di.parallel.tsp.TSPCostCalculator;
 
-import java.util.concurrent.Callable;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
- * Created by Robin on 05/04/2017.
+ * Created by Robin on 15/04/2017.
  */
-public class Swapper implements Callable<Solution>{
+public class Swapper implements Runnable
+{
+    private Solution solution;
+    private boolean stop;
+    private final long max_cpu;
+    private final long startTime;
+    private final long localStartTime;
+    private final Instance instance;
+    private long counter = 0;
 
-    private Solution solution = null;
-    private Solution bestSolution = null;
-    private Instance instance = null;
-    private long max_cpu = 0;
-    private long nbIterations = 0;
-    private long runs;
-    private long timeLeft;
-
-//    public Swapper(Solution solution, Instance instance, long max_cpu) {
-//        this.solution = solution;
-//        this.instance = instance;
-//        this.max_cpu = max_cpu;
-//    }
-
-    public Swapper(long timeLeft)
+    public Swapper (Instance instance, Solution solution, long startTime, long localStartTime, long max_cpu)
     {
-        this.timeLeft = timeLeft;
+        this.solution = solution;
+        this.startTime = startTime;
+        this.localStartTime = localStartTime;
+        this.instance = instance;
+        this.max_cpu = max_cpu;
+        stop = false;
     }
 
-    public Solution getSolution()
+    public Solution getSolution ()
     {
-        return this.solution;
+        return solution;
     }
 
-    public long getNbIterations()
+    public boolean isDone ()
     {
-        return nbIterations;
-    }
-
-    public Solution getBestSolution()
-    {
-        return bestSolution;
-    }
-
-    public Solution localSearch()
-    {
-        int i, j, size;
-        Solution solToSwap;
-        Solution bestSol = solution.clone();
-        double matrix[][] = instance.getDistanceMatrix();
-        long startTime=System.currentTimeMillis();
-        size = solution.size();
-        TSPCostCalculator costCalc = new TSPCostCalculator();
-
-        bestSol.setOF(costCalc.calcOF(matrix, bestSol));
-
-        while((System.currentTimeMillis()-startTime)/1_000 <= timeLeft){
-            i = ThreadLocalRandom.current().nextInt(size);
-            j = ThreadLocalRandom.current().nextInt(size);
-
-            if(i == j) continue;
-
-            solToSwap = bestSol.clone();
-            solToSwap.relocate(i, j);
-            //set the objective function of the solution
-            double OF = costCalc.calcOF(matrix, solToSwap);
-            solToSwap.setOF(OF);
-            if(OF < bestSol.getOF())
-            {
-                System.out.println(OF);
-                bestSol = solToSwap;
-            }
-            nbIterations++;
-        }
-
-        return bestSol;
+        return stop;
     }
 
     /**
-     * Computes a result, or throws an exception if unable to do so.
+     * When an object implementing interface <code>Runnable</code> is used
+     * to create a thread, starting the thread causes the object's
+     * <code>run</code> method to be called in that separately executing
+     * thread.
+     * <p>
+     * The general contract of the method <code>run</code> is that it may
+     * take any action whatsoever.
      *
-     * @return computed result
-     * @throws Exception if unable to compute a result
+     * @see Thread#run()
      */
     @Override
-    public Solution call() throws Exception {
-        return localSearch();
+    public void run ()
+    {
+        solution = runAlgorithm();
+        stop = true;
+    }
+
+    public long getCounter()
+    {
+        return counter;
+    }
+
+    private Solution runAlgorithm ()
+    {
+        int i, j, size;
+        TSPCostCalculator costCalculator = new TSPCostCalculator(instance);
+        Solution bestSolution = solution.clone();
+        bestSolution.setOF(costCalculator.calcOF(bestSolution));
+
+        size = bestSolution.size();
+
+        while (( System.currentTimeMillis() - startTime + localStartTime) / 1_000 <= max_cpu)
+        {
+            i = ThreadLocalRandom.current().nextInt(size);
+            j = ThreadLocalRandom.current().nextInt(size);
+
+            double OF;
+            Solution test = bestSolution.clone();
+
+            test.relocate(i, j);
+            OF = costCalculator.calcOF(test);
+            test.setOF(OF);
+            counter++;
+
+            if (OF < bestSolution.getOF())
+            {
+                bestSolution = test;
+            }
+        }
+
+        return bestSolution;
     }
 }
