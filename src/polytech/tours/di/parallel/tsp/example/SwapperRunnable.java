@@ -9,7 +9,7 @@ import java.util.concurrent.ThreadLocalRandom;
 /**
  * Created by Robin on 15/04/2017.
  */
-public class Swapper implements Runnable
+public class SwapperRunnable implements Runnable
 {
     private Solution solution;
     private boolean stop;
@@ -19,7 +19,7 @@ public class Swapper implements Runnable
     private final Instance instance;
     private long counter = 0;
 
-    public Swapper (Instance instance, Solution solution, long startTime, long localStartTime, long max_cpu)
+    public SwapperRunnable (Instance instance, Solution solution, long startTime, long localStartTime, long max_cpu)
     {
         this.solution = solution;
         this.startTime = startTime;

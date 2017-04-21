@@ -2,16 +2,13 @@ package polytech.tours.di.parallel.tsp.example;
 
 import polytech.tours.di.parallel.tsp.*;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Properties;
-import java.util.Random;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.*;
+import java.util.concurrent.*;
 
 /**
  * Created by Robin on 05/04/2017.
  */
-public class ConcurrentSearch implements Algorithm
+public class ConcurrentSearchCallable implements Algorithm
 {
 
     // Constants
@@ -32,8 +29,8 @@ public class ConcurrentSearch implements Algorithm
         Instance instance = ir.getInstance();
 
         //print some distances
-        System.out.println("d(1,2)=" + instance.getDistance(1, 2));
-        System.out.println("d(10,19)=" + instance.getDistance(10, 19));
+//        System.out.println("d(1,2)=" + instance.getDistance(1, 2));
+//        System.out.println("d(10,19)=" + instance.getDistance(10, 19));
 
         //read maximum CPU time
         long max_cpu = Long.valueOf(config.getProperty("maxcpu"));
@@ -42,7 +39,6 @@ public class ConcurrentSearch implements Algorithm
         rnd = new Random(Long.valueOf(config.getProperty("seed")));
         Solution s = new Solution();
 
-        startTime = System.currentTimeMillis();
         for (int i = 0; i < instance.getN(); i++)
         {
             s.add(i);
@@ -59,49 +55,45 @@ public class ConcurrentSearch implements Algorithm
     {
         Solution bestSolution = solution.clone();
 
-        CopyOnWriteArrayList<Swapper> swappers = new CopyOnWriteArrayList<>();
-        ArrayList<Solution> solutions = new ArrayList<>();
+        ExecutorService executor = Executors.newFixedThreadPool(NB_THREADS);
+        List<Callable<Solution>> tasks = new ArrayList<>();
+        List<Future<Solution>> solutions;
 
+        startTime = System.currentTimeMillis();
         for (int i = 0; i < NB_THREADS; i++)
         {
             Collections.shuffle(bestSolution, rnd);
-            Swapper swapper = new Swapper(instance, bestSolution, startTime, System.currentTimeMillis() - startTime, max_cpu);
-            (new Thread(swapper)).start();
-            swappers.add(swapper);
+            Callable<Solution> swapper = new SwapperCallable(instance, bestSolution, startTime, System.currentTimeMillis() - startTime + 1000, max_cpu);
+            tasks.add(swapper);
         }
 
-        for (Swapper swapper : swappers)
+        try
         {
-            while (!swapper.isDone())
+            solutions = executor.invokeAll(tasks);
+            executor.shutdown();
+
+            for (Callable<Solution> t : tasks)
             {
-                // We pause this thread to allow the others to run
-                try
-                {
-                    Thread.sleep(10);
-                }
-                catch (InterruptedException e)
-                {
-                    continue;
-                }
+                counter += ((SwapperCallable) t).getCounter();
             }
-
-            // We add this swapper's solution to the list
-            solutions.add(swapper.getSolution());
-            counter += swapper.getCounter();
+        }
+        catch (InterruptedException e)
+        {
+            return bestSolution;
         }
 
-        if (bestSolution == null && !solutions.isEmpty())
-        {
-            bestSolution = solutions.get(0);
-        }
-
-        // We look for the best 'best solution'
-        for (Solution sol : solutions)
-        {
-            if (sol.getOF() < bestSolution.getOF())
+        try{
+            for(Future<Solution> s : solutions)
             {
-                bestSolution = sol;
+                Solution tmp = s.get();
+
+                if(bestSolution.getOF() > tmp.getOF())
+                    bestSolution = tmp;
             }
+        }
+        catch (InterruptedException | ExecutionException e)
+        {
+            return bestSolution;
         }
 
         System.out.println("Computations : " + counter);
