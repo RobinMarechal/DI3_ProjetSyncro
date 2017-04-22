@@ -4,6 +4,7 @@ import polytech.tours.di.parallel.tsp.Instance;
 import polytech.tours.di.parallel.tsp.Solution;
 import polytech.tours.di.parallel.tsp.TSPCostCalculator;
 
+import java.util.Collections;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -50,34 +51,77 @@ public class SwapperCallable implements Callable<Solution>
         return counter;
     }
 
+//    private Solution runAlgorithm ()
+//    {
+//        int i, j, size;
+//        TSPCostCalculator costCalculator = new TSPCostCalculator(instance);
+//        Solution bestSolution = solution.clone();
+//        Collections.shuffle(bestSolution, ThreadLocalRandom.current());
+//        bestSolution.setOF(costCalculator.calcOF(bestSolution));
+//
+//        size = bestSolution.size();
+//
+//        while (( System.currentTimeMillis() - startTime + localStartTime) / 1_000 <= max_cpu)
+//        {
+//            i = ThreadLocalRandom.current().nextInt(size);
+//            j = ThreadLocalRandom.current().nextInt(size);
+//
+//            double OF;
+//            Solution test = bestSolution.clone();
+//
+//            test.relocate(i, j);
+//            OF = costCalculator.calcOF(test);
+//            test.setOF(OF);
+//            counter++;
+//
+//            if (OF < bestSolution.getOF())
+//            {
+//                bestSolution = test;
+//            }
+//        }
+//
+//        return bestSolution;
+//    }
+
     private Solution runAlgorithm ()
     {
-        int i, j, size;
         TSPCostCalculator costCalculator = new TSPCostCalculator(instance);
         Solution bestSolution = solution.clone();
+        Collections.shuffle(bestSolution, ThreadLocalRandom.current());
         bestSolution.setOF(costCalculator.calcOF(bestSolution));
 
-        size = bestSolution.size();
+        int size = bestSolution.size();
+        boolean stop = false;
 
-        while (( System.currentTimeMillis() - startTime + localStartTime) / 1_000 <= max_cpu)
+//        while (( System.currentTimeMillis() - startTime + localStartTime) / 1_000 <= max_cpu)
+        while(!stop)
         {
-            i = ThreadLocalRandom.current().nextInt(size);
-            j = ThreadLocalRandom.current().nextInt(size);
-
-            double OF;
-            Solution test = bestSolution.clone();
-
-            test.relocate(i, j);
-            OF = costCalculator.calcOF(test);
-            test.setOF(OF);
-            counter++;
-
-            if (OF < bestSolution.getOF())
+            for(int i = 0; i < size && !stop; i++)
             {
-                bestSolution = test;
+                for(int j = 0; j < size && !stop; j++)
+                {
+                    double OF;
+                    Solution test = bestSolution.clone();
+
+                    test.relocate(i, j);
+                    OF = costCalculator.calcOF(test);
+                    test.setOF(OF);
+                    counter++;
+
+                    if (OF < bestSolution.getOF())
+                    {
+                        bestSolution = test;
+                    }
+
+                    if(( System.currentTimeMillis() - startTime + localStartTime) / 1_000 >= max_cpu)
+                        stop = true;
+                }
             }
+
         }
 
         return bestSolution;
     }
+
+
 }

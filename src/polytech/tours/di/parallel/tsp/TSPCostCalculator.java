@@ -23,7 +23,6 @@ public class TSPCostCalculator
     /**
      * Computes the objective function of a TSP tour
      *
-     * @param instance the instance data
      * @param s        the solution
      * @return the objective function of solution <code>s</code>
      */

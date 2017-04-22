@@ -3,7 +3,6 @@ package polytech.tours.di.parallel.tsp.example;
 import polytech.tours.di.parallel.tsp.*;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Properties;
 import java.util.Random;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -13,11 +12,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public class ConcurrentSearchRunnable implements Algorithm
 {
-
-    // Constants
-    private final int NB_THREADS = 64;
-
-    private long counter = 0;
+    private int nbThreads = 4;
+    private long counter;
     private long startTime;
     private Random rnd;
 
@@ -50,11 +46,21 @@ public class ConcurrentSearchRunnable implements Algorithm
 
         TSPCostCalculator tsp = new TSPCostCalculator(instance);
         s.setOF(tsp.calcOF(s));
+        counter = 0;
         Solution best = execute(s, instance, max_cpu);
 
         return best;
     }
 
+    public void setNbThreads(int nbThreads)
+    {
+        this.nbThreads = nbThreads;
+    }
+
+    public long getCounter ()
+    {
+        return counter;
+    }
 
     private Solution execute (Solution solution, Instance instance, long max_cpu)
     {
@@ -63,10 +69,9 @@ public class ConcurrentSearchRunnable implements Algorithm
         CopyOnWriteArrayList<SwapperRunnable> swappers = new CopyOnWriteArrayList<>();
         ArrayList<Solution> solutions = new ArrayList<>();
 
-        for (int i = 0; i < NB_THREADS; i++)
+        for (int i = 0; i < nbThreads; i++)
         {
-            Collections.shuffle(bestSolution, rnd);
-            SwapperRunnable swapper = new SwapperRunnable(instance, bestSolution, startTime, System.currentTimeMillis() - startTime + 1_000, max_cpu);
+            SwapperRunnable swapper = new SwapperRunnable(instance, solution, startTime, System.currentTimeMillis() - startTime, max_cpu);
             (new Thread(swapper)).start();
             swappers.add(swapper);
         }
@@ -105,8 +110,9 @@ public class ConcurrentSearchRunnable implements Algorithm
             }
         }
 
-        System.out.println("Computations : " + counter);
-        System.out.println("Time : " + (System.currentTimeMillis() - startTime) + "ms");
+        System.out.println("Threads: " + nbThreads);
+        System.out.println("Computations: " + counter);
+        System.out.println("Time: " + (System.currentTimeMillis() - startTime) + "ms");
 
         return bestSolution;
     }

@@ -11,10 +11,8 @@ import java.util.concurrent.*;
 public class ConcurrentSearchCallable implements Algorithm
 {
 
-    // Constants
-    private final int NB_THREADS = 64;
-
-    private long counter = 0;
+    private int nbThreads = 4;
+    private long counter;
     private long startTime;
     private Random rnd;
 
@@ -29,8 +27,8 @@ public class ConcurrentSearchCallable implements Algorithm
         Instance instance = ir.getInstance();
 
         //print some distances
-//        System.out.println("d(1,2)=" + instance.getDistance(1, 2));
-//        System.out.println("d(10,19)=" + instance.getDistance(10, 19));
+        //        System.out.println("d(1,2)=" + instance.getDistance(1, 2));
+        //        System.out.println("d(10,19)=" + instance.getDistance(10, 19));
 
         //read maximum CPU time
         long max_cpu = Long.valueOf(config.getProperty("maxcpu"));
@@ -46,24 +44,40 @@ public class ConcurrentSearchCallable implements Algorithm
 
         TSPCostCalculator tsp = new TSPCostCalculator(instance);
         s.setOF(tsp.calcOF(s));
+
+        counter = 0;
+
         Solution best = execute(s, instance, max_cpu);
 
         return best;
+    }
+
+    public void setNbThreads(int nbThreads)
+    {
+        this.nbThreads = nbThreads;
+    }
+
+    public long getCounter ()
+    {
+        return counter;
     }
 
     private Solution execute (Solution solution, Instance instance, long max_cpu)
     {
         Solution bestSolution = solution.clone();
 
-        ExecutorService executor = Executors.newFixedThreadPool(NB_THREADS);
+        ExecutorService executor = Executors.newFixedThreadPool(nbThreads);
         List<Callable<Solution>> tasks = new ArrayList<>();
         List<Future<Solution>> solutions;
 
         startTime = System.currentTimeMillis();
-        for (int i = 0; i < NB_THREADS; i++)
+        for (int i = 0; i < nbThreads; i++)
         {
-            Collections.shuffle(bestSolution, rnd);
-            Callable<Solution> swapper = new SwapperCallable(instance, bestSolution, startTime, System.currentTimeMillis() - startTime + 1000, max_cpu);
+            Callable<Solution> swapper = new SwapperCallable(instance,
+                                            solution,
+                                            startTime,
+                                            System.currentTimeMillis() - startTime,
+                                            max_cpu);
             tasks.add(swapper);
         }
 
@@ -82,13 +96,16 @@ public class ConcurrentSearchCallable implements Algorithm
             return bestSolution;
         }
 
-        try{
-            for(Future<Solution> s : solutions)
+        try
+        {
+            for (Future<Solution> s : solutions)
             {
                 Solution tmp = s.get();
 
-                if(bestSolution.getOF() > tmp.getOF())
+                if (bestSolution.getOF() > tmp.getOF())
+                {
                     bestSolution = tmp;
+                }
             }
         }
         catch (InterruptedException | ExecutionException e)
@@ -96,9 +113,11 @@ public class ConcurrentSearchCallable implements Algorithm
             return bestSolution;
         }
 
-        System.out.println("Computations : " + counter);
-        System.out.println("Time : " + (System.currentTimeMillis() - startTime) + "ms");
+        System.out.println("Threads: " + nbThreads);
+        System.out.println("Computations: " + counter);
+        System.out.println("Time: " + (System.currentTimeMillis() - startTime) + "ms");
 
+        
         return bestSolution;
     }
 

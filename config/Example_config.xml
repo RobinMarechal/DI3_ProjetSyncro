@@ -8,9 +8,8 @@
     <entry key="ConcurrentSearchCallable_description">Parallel TSP algorithm using Callable template interface</entry>
    <entry key="algorithm2">polytech.tours.di.parallel.tsp.example.ConcurrentSearchRunnable</entry>
     <entry key="ConcurrentSearchRunnable_description">Parallel TSP algorithm using Runnable interface</entry>
-   <entry key="maxcpu">5</entry>
+   <entry key="maxcpu">10</entry>
    <entry key="instance">./data/wi29.tsp.txt</entry>
-   <!--<entry key="instance">./data/kz9976.tsp.txt</entry>-->
    <!--<entry key="instance">./data/mo14185.tsp.txt</entry>-->
    <entry key="seed">123456</entry>
 </properties>

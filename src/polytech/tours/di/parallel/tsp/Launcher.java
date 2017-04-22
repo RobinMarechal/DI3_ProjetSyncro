@@ -14,7 +14,7 @@ public class Launcher
 {
 
     /**
-     * @param args[0] the file (path included) with he configuration settings
+     * @param args [0] the file (path included) with he configuration settings
      */
     public static void main (String[] args)
     {
@@ -56,6 +56,7 @@ public class Launcher
         //report solution
         System.out.println(s);
 
+        /*
         System.out.println();
         System.out.println("-------------------------------------------------------");
         System.out.println("Class: " + algorithm2.getClass().getSimpleName());
@@ -67,5 +68,6 @@ public class Launcher
 
         //report solution
         System.out.println(s2);
+        */
     }
 }
