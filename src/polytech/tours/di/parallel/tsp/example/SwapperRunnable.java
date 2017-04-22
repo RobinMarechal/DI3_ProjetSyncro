@@ -20,6 +20,16 @@ public class SwapperRunnable implements Runnable
     private final Instance instance;
     private long counter = 0;
 
+
+    /**
+     * SwapperRunnable constructor
+     *
+     * @param instance
+     * @param solution
+     * @param startTime      The starting time
+     * @param localStartTime The actual running time since <code>startTime</code>
+     * @param max_cpu        The maximal runtime
+     */
     public SwapperRunnable (Instance instance, Solution solution, long startTime, long localStartTime, long max_cpu)
     {
         this.solution = solution;
@@ -58,12 +68,22 @@ public class SwapperRunnable implements Runnable
         stop = true;
     }
 
-    public long getCounter()
+    /**
+     * Returns the number of the local search's computations
+     *
+     * @return the number of computations
+     */
+    public long getCounter ()
     {
         return counter;
     }
 
 
+    /**
+     * Runs a local search to find the best solution
+     *
+     * @return the best tested solution
+     */
     private Solution runAlgorithm ()
     {
         TSPCostCalculator costCalculator = new TSPCostCalculator(instance);
@@ -74,12 +94,11 @@ public class SwapperRunnable implements Runnable
         int size = bestSolution.size();
         boolean stop = false;
 
-        //        while (( System.currentTimeMillis() - startTime + localStartTime) / 1_000 <= max_cpu)
-        while(!stop)
+        while (!stop)
         {
-            for(int i = 0; i < size && !stop; i++)
+            for (int i = 0; i < size && !stop; i++)
             {
-                for(int j = 0; j < size && !stop; j++)
+                for (int j = 0; j < size && !stop; j++)
                 {
                     double OF;
                     Solution test = bestSolution.clone();
@@ -94,8 +113,10 @@ public class SwapperRunnable implements Runnable
                         bestSolution = test;
                     }
 
-                    if(( System.currentTimeMillis() - startTime + localStartTime) / 1_000 >= max_cpu)
+                    if ((System.currentTimeMillis() - startTime + localStartTime) / 1_000 >= max_cpu)
+                    {
                         stop = true;
+                    }
                 }
             }
 

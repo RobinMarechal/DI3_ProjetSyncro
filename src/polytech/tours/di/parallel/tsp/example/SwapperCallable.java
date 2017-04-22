@@ -20,6 +20,15 @@ public class SwapperCallable implements Callable<Solution>
     private final Instance instance;
     private long counter = 0;
 
+    /**
+     * SwapperCallable constructor
+     *
+     * @param instance
+     * @param solution
+     * @param startTime      The starting time
+     * @param localStartTime The actual running time since <code>startTime</code>
+     * @param max_cpu        The maximal runtime
+     */
     public SwapperCallable (Instance instance, Solution solution, long startTime, long localStartTime, long max_cpu)
     {
         this.solution = solution;
@@ -46,43 +55,21 @@ public class SwapperCallable implements Callable<Solution>
         return runAlgorithm();
     }
 
-    public long getCounter()
+    /**
+     * Returns the number of the local search's computations
+     *
+     * @return the number of computations
+     */
+    public long getCounter ()
     {
         return counter;
     }
 
-//    private Solution runAlgorithm ()
-//    {
-//        int i, j, size;
-//        TSPCostCalculator costCalculator = new TSPCostCalculator(instance);
-//        Solution bestSolution = solution.clone();
-//        Collections.shuffle(bestSolution, ThreadLocalRandom.current());
-//        bestSolution.setOF(costCalculator.calcOF(bestSolution));
-//
-//        size = bestSolution.size();
-//
-//        while (( System.currentTimeMillis() - startTime + localStartTime) / 1_000 <= max_cpu)
-//        {
-//            i = ThreadLocalRandom.current().nextInt(size);
-//            j = ThreadLocalRandom.current().nextInt(size);
-//
-//            double OF;
-//            Solution test = bestSolution.clone();
-//
-//            test.relocate(i, j);
-//            OF = costCalculator.calcOF(test);
-//            test.setOF(OF);
-//            counter++;
-//
-//            if (OF < bestSolution.getOF())
-//            {
-//                bestSolution = test;
-//            }
-//        }
-//
-//        return bestSolution;
-//    }
-
+    /**
+     * Runs a local search to find the best solution
+     *
+     * @return the best tested solution
+     */
     private Solution runAlgorithm ()
     {
         TSPCostCalculator costCalculator = new TSPCostCalculator(instance);
@@ -93,12 +80,11 @@ public class SwapperCallable implements Callable<Solution>
         int size = bestSolution.size();
         boolean stop = false;
 
-//        while (( System.currentTimeMillis() - startTime + localStartTime) / 1_000 <= max_cpu)
-        while(!stop)
+        while (!stop)
         {
-            for(int i = 0; i < size && !stop; i++)
+            for (int i = 0; i < size && !stop; i++)
             {
-                for(int j = 0; j < size && !stop; j++)
+                for (int j = 0; j < size && !stop; j++)
                 {
                     double OF;
                     Solution test = bestSolution.clone();
@@ -113,8 +99,10 @@ public class SwapperCallable implements Callable<Solution>
                         bestSolution = test;
                     }
 
-                    if(( System.currentTimeMillis() - startTime + localStartTime) / 1_000 >= max_cpu)
+                    if ((System.currentTimeMillis() - startTime + localStartTime) / 1_000 >= max_cpu)
+                    {
                         stop = true;
+                    }
                 }
             }
 

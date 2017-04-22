@@ -4,7 +4,6 @@ import polytech.tours.di.parallel.tsp.*;
 
 import java.util.ArrayList;
 import java.util.Properties;
-import java.util.Random;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -15,8 +14,12 @@ public class ConcurrentSearchRunnable implements Algorithm
     private int nbThreads = 4;
     private long counter;
     private long startTime;
-    private Random rnd;
 
+    /**
+     *
+     * @param config the algorithm's configuration
+     * @return the best found solution
+     */
     @Override
     public Solution run (Properties config)
     {
@@ -28,14 +31,12 @@ public class ConcurrentSearchRunnable implements Algorithm
         Instance instance = ir.getInstance();
 
         //print some distances
-//        System.out.println("d(1,2)=" + instance.getDistance(1, 2));
-//        System.out.println("d(10,19)=" + instance.getDistance(10, 19));
+        //        System.out.println("d(1,2)=" + instance.getDistance(1, 2));
+        //        System.out.println("d(10,19)=" + instance.getDistance(10, 19));
 
         //read maximum CPU time
         long max_cpu = Long.valueOf(config.getProperty("maxcpu"));
 
-        //build a random solution
-        rnd = new Random(Long.valueOf(config.getProperty("seed")));
         Solution s = new Solution();
 
         startTime = System.currentTimeMillis();
@@ -47,21 +48,39 @@ public class ConcurrentSearchRunnable implements Algorithm
         TSPCostCalculator tsp = new TSPCostCalculator(instance);
         s.setOF(tsp.calcOF(s));
         counter = 0;
+
         Solution best = execute(s, instance, max_cpu);
 
         return best;
     }
 
-    public void setNbThreads(int nbThreads)
+    /**
+     * Sets the number of threads that will be created
+     * @param nbThreads the number of threads that will be created
+     */
+    public void setNbThreads (int nbThreads)
     {
         this.nbThreads = nbThreads;
     }
 
+    /**
+     * Returns the total number of the parallel algorithm's computations
+     *
+     * @return the number of computations
+     */
     public long getCounter ()
     {
         return counter;
     }
 
+    /**
+     * Runs a parallel algorithm to find the best solution of the TSP
+     *
+     * @param solution one random solution
+     * @param instance the instance containing distances matrix
+     * @param max_cpu  the maximal runtime
+     * @return the best found solution
+     */
     private Solution execute (Solution solution, Instance instance, long max_cpu)
     {
         Solution bestSolution = solution.clone();
